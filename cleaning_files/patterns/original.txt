@@ -1,0 +1,91 @@
+# Regex cleaning procedure: the original version, as used by the
+# NB Category Classifier repos.
+#
+# FORMAT
+#   [delete]    each following line is a regex; matches are removed
+#   [replace]   each following line is  <regex> => <python string literal>
+#   Sections are applied top to bottom, one pattern at a time, in order.
+#   Lines starting with # are comments; blank lines are ignored.
+#   Leading and trailing whitespace on a line is stripped, so write \s
+#   rather than a literal space at either end of a pattern.
+#
+# PLACEHOLDERS
+#   <<name>>          the terms of cleaning_files/lists/<name>.txt, joined
+#                     with | (as-is, not regex-escaped)
+#   <<name:escaped>>  the same, with each term regex-escaped
+#
+# To try an alternative, copy this file, edit the copy, and point
+# PATTERN_FILE at it in notebook 01. The resolved patterns are saved in
+# the cleaning config, so a later edit to a file cannot change an
+# earlier run.
+
+[delete]
+# DV or DC indicators
+\(DV\)|\[DV\]|\(DC\)|\[DC\]
+# number followed by a slash and then PK, etc.
+(?<=\s)\d+/(CT|CNT|CA|PK|BX|BG|CASE|PACK|BOX|BAG|RL|ROLL)
+# number (or number followed by a dash) followed by CNT/PK, etc.
+(?<=\s)\d+(?:-)?/(CNT|CT)/(CA|PK|BX|BG|RL|ROLL)
+# combos of digits, "X", units like FT/IN, dashes and slashes
+(?<=\s)(?:\d+|\.|/|-|X)(?:\d+|\.|/|-|X|FT|IN|CM|MM|MIL|TPI|TP|T){1,}(?=\s|$)
+# periods
+[.]
+(?:\d+-)?\d+/\d+[Xx]\d+
+\d+/\d+[Xx]\d+-\d+/\d+
+\d+[Xx]\d+-\d+/\d+
+# #/#X#
+\d+/\d+[Xx]\d+
+\d+-\d+/\d+
+# #/#
+\d+/\d+
+
+[replace]
+# apostrophe to a space
+[']  =>  " "
+
+[delete]
+# #X#<unit> or #X#X#<unit>
+(?<=\s)\d+(?:(?:X\d+)|(<<unit_abbrevs>>))*(<<unit_abbrevs>>)(?=\s|$)
+# numbers followed by a unit abbreviation
+(?<=\s)\d+(<<unit_abbrevs>>)(?=\s|$)
+# PSI, HP, or a number followed by PSI or HP
+(?<=\s)(?:\d+\s*(?:PSI|HP)|PSI|HP)
+# colour abbreviations
+(?<=\s)(<<color_abbrevs>>)(?=\s|$)
+# colours
+(?<=\s)(<<colors>>)(?=\s|$)
+# sizes
+(?:^|\s)(<<sizes>>)/(<<sizes>>)(?=\s|$)
+(?<=\s)(<<sizes>>)(?=\s|$)
+# unit plurals
+(?<=\s)(<<unit_plurals>>)(?=\s|$)
+# units
+(?<=\s)(<<units>>)(?=\s|$)
+# unit abbreviations
+(?<=\s)(<<unit_abbrevs>>)(?=\s|$)
+# numbers followed by CT, CNT, CA, etc.
+(?<=\s)\d+(CT|CNT|CA|PK|BX|BG)(?=\s|$)
+# "W/"
+W/
+# #X# mixed with slashes and/or dashes
+(?i)(?<=\s)(?:(?:\d+(?:\.\d+)?|X|/|-)){2,}(?=\s|$)
+# things like 1-1/4X3-1/2
+\d+-\d+/\d+\s*X\s*\d+-\d+/\d+
+# things like 1-1/2
+\b\d+-\d+/\d+
+# special characters
+[-\./()<>#&+\"!@$%^\*]
+# #X#
+\d+X\d+
+# standalone numbers
+(?<=\s)\d+(?=\s|$)
+# numbers followed by "T"
+(?<=\s)\d+T(?=\s|$)
+# stray "X"
+(?<=\s)X(?=\s|$)
+# stray "SZ", or SZ followed by numbers or a size
+SZ(?=\s|$)|SZ\d\S*|\d+SZ\S*|SZ[./\-:;]\S*|SZ(?:<<sizes:escaped>>)\b
+
+[replace]
+# collapse runs of whitespace
+\s{2,}  =>  " "

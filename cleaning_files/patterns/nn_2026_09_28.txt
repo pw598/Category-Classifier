@@ -1,0 +1,74 @@
+# Regex cleaning procedure: the revision made in the NN Category
+# Classifier repo on 2026-09-28. Differences from original.txt are
+# marked CHANGED. See original.txt for the file format.
+
+[delete]
+# DV or DC indicators
+\(DV\)|\[DV\]|\(DC\)|\[DC\]
+# number followed by a slash and then PK, etc.
+(?<=\s)\d+/(CT|CNT|CA|PK|BX|BG|CASE|PACK|BOX|BAG|RL|ROLL)
+# number (or number followed by a dash) followed by CNT/PK, etc.
+(?<=\s)\d+(?:-)?/(CNT|CT)/(CA|PK|BX|BG|RL|ROLL)
+# CHANGED: removed the rule deleting any run of digits/X/units. It also
+# deleted carbide grades (4325), series numbers (390) and model numbers.
+# periods
+[.]
+(?:\d+-)?\d+/\d+[Xx]\d+
+\d+/\d+[Xx]\d+-\d+/\d+
+\d+[Xx]\d+-\d+/\d+
+# #/#X#
+\d+/\d+[Xx]\d+
+\d+-\d+/\d+
+# #/#
+\d+/\d+
+
+[replace]
+# apostrophe to a space
+[']  =>  " "
+
+[delete]
+# #X#<unit> or #X#X#<unit>
+(?<=\s)\d+(?:(?:X\d+)|(<<unit_abbrevs>>))*(<<unit_abbrevs>>)(?=\s|$)
+# numbers followed by a unit abbreviation
+(?<=\s)\d+(<<unit_abbrevs>>)(?=\s|$)
+# CHANGED: PSI/HP rule removed -- pressure and power ratings carry
+# category signal (3000PSI hydraulic hose vs 150PSI air hose).
+# colour abbreviations
+(?<=\s)(<<color_abbrevs>>)(?=\s|$)
+# colours
+(?<=\s)(<<colors>>)(?=\s|$)
+# sizes
+(?:^|\s)(<<sizes>>)/(<<sizes>>)(?=\s|$)
+(?<=\s)(<<sizes>>)(?=\s|$)
+# CHANGED: unit plurals, units and unit abbreviations are kept. The unit
+# says what kind of thing an item is (GAL, FT, LB).
+# numbers followed by CT, CNT, CA, etc.
+(?<=\s)\d+(CT|CNT|CA|PK|BX|BG)(?=\s|$)
+# "W/"
+W/
+# #X# mixed with slashes and/or dashes
+(?i)(?<=\s)(?:(?:\d+(?:\.\d+)?|X|/|-)){2,}(?=\s|$)
+# things like 1-1/4X3-1/2
+\d+-\d+/\d+\s*X\s*\d+-\d+/\d+
+# things like 1-1/2
+\b\d+-\d+/\d+
+# CHANGED: dash removed from the special characters, so 6203-2RS and
+# CROUSE-HINDS are no longer merged into rarer tokens.
+[\./()<>#&+\"!@$%^\*]
+# #X#
+\d+X\d+
+# standalone numbers
+(?<=\s)\d+(?=\s|$)
+# CHANGED: "numbers followed by T" removed (tooth counts, frame sizes).
+# CHANGED: added. Deletes a token made only of separators and unit
+# letters, containing at least one separator -- the fragments left by
+# removing the first dimension rule ("1/2X1X1/4IN" -> "XIN").
+(?<=\s)(?=\S*[X\-/.])(?:[X\-/.]|FT|IN|CM|MM|MIL|TPI|TP|T)+(?=\s|$)
+# stray "X"
+(?<=\s)X(?=\s|$)
+# stray "SZ", or SZ followed by numbers or a size
+SZ(?=\s|$)|SZ\d\S*|\d+SZ\S*|SZ[./\-:;]\S*|SZ(?:<<sizes:escaped>>)\b
+
+[replace]
+# collapse runs of whitespace
+\s{2,}  =>  " "
